@@ -27,10 +27,6 @@ PLUGIN_CONFIG_SCHEMA = {
             'value': '',
             'type': str,
         },
-        'notifications_hooks': {
-            'value': 1,
-            'type': int,
-        },
     },
 }
 
@@ -130,9 +126,9 @@ class Collection(BaseCollection):
     ) -> Tuple["radicale_item.Item", Optional["radicale_item.Item"]]:
         item_table = self._storage._meta.tables['item']
 
-        # Get the old item before uploading (only if notifications_hooks is enabled)
+        # Get the old item before uploading (only if hook.type is not 'none')
         old_item = None
-        if self._storage.configuration.get('storage', 'notifications_hooks'):
+        if self._storage.configuration.get('hook', 'type') != 'none':
             old_item_result = list(self._get_multi([href], connection=connection))
             old_item = old_item_result[0][1] if old_item_result else None
 
@@ -700,8 +696,8 @@ class Storage(BaseStorage):
 
         if items is not None or props is not None:
             # Get existing items before deletion to track replacements
-            # (only if notifications_hooks is enabled)
-            if items is not None and self.configuration.get('storage', 'notifications_hooks'):
+            # (only if hook.type is not 'none')
+            if items is not None and self.configuration.get('hook', 'type') != 'none':
                 select_existing_items = sa.select(
                     item_table.c,
                 ).select_from(
